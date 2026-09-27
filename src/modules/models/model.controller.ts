@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { addModel, getModels, incrementAttemp } from 'src/supa-api.service';
+import { addModel, getModels, incrementAttemp } from '../../supa-api.service';
 import { CBService } from '../cb/cb.service';
 
 @Controller('model')

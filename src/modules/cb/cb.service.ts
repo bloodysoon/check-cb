@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { getModels, updateDbOnlineStatus, updateDbOnlineStatusToFalse, VideoModel } from 'src/supa-api.service';
+import { getModels, updateDbOnlineStatus, updateDbOnlineStatusToFalse, VideoModel } from '../../supa-api.service';
 
 const cbApi = 'https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=3YHSK';
 
