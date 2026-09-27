@@ -69,9 +69,12 @@ export async function addModel(name: string, status?: string) {
   const supabase = createSupabaseClient();
   const payload: any = { name };
   if (status) payload.status = status;
-  console.log('Inserting into ChatModels:', payload);
-  const { data, error } = await supabase.from('ChatModels').insert(payload).select();
-  console.log('Supabase insert result:', { data, error });
+  console.log('Upserting into ChatModels:', payload);
+  const { data, error } = await supabase
+    .from('ChatModels')
+    .upsert(payload, { onConflict: 'name' })
+    .select();
+  console.log('Supabase upsert result:', { data, error });
   if (error) throw new Error(`Error adding model: ${error.message}`);
   return data;
 }
@@ -115,11 +118,14 @@ export async function saveModels(models: { name: string; status?: string | null 
     } else {
       const payload: any = { name: trimmedName };
       if (status !== undefined) payload.status = status;
-      console.log('saveModels: inserting', { trimmedName, payload });
-      const { data, error } = await supabase.from('ChatModels').insert(payload).select();
-      console.log('saveModels: insert result', { trimmedName, data, error });
+      console.log('saveModels: upserting', { trimmedName, payload });
+      const { data, error } = await supabase
+        .from('ChatModels')
+        .upsert(payload, { onConflict: 'name' })
+        .select();
+      console.log('saveModels: upsert result', { trimmedName, data, error });
       if (error) throw new Error(`Error adding ${trimmedName}: ${error.message}`);
-      results.push({ name: trimmedName, action: 'inserted', data });
+      results.push({ name: trimmedName, action: 'upserted', data });
     }
   }
 
