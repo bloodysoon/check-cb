@@ -49,7 +49,7 @@ export class ModelController {
     @Body() body: { name: string },
   ): Promise<{ name: string; attemp: number }> {
     const updated = await incrementAttemp(body.name);
-    return { name: body.name, attemp: (updated as any).attemp };
+    return { name: body.name, attemp: (updated as any).attempt };
   }
 }
 

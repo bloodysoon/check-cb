@@ -32,7 +32,7 @@ export class CBService {
     limit: number = 20,
     page: number = 1,
     status?: string,
-  ): Promise<{ name: string; image_url: string; status?: string | null }[]> {
+  ): Promise<{ name: string; image_url: string; status?: string | null; attemp?: number | null }[]> {
     this.logger.log('getCbModels: start', { limit, page, status });
     const [data, dbModels] = await Promise.all([
       this.getCbData(),
@@ -40,15 +40,15 @@ export class CBService {
     ]);
     this.logger.log('getCbModels: fetched data', { cbModels: data.length, dbModels: dbModels.length });
 
-    const statusByName = new Map<string, string | null>();
+    const dbByName = new Map<string, { status: string | null; attemp: number | null }>();
     for (const dbModel of dbModels) {
       if (!dbModel.name?.trim()) continue;
       const key = dbModel.name.trim().toLowerCase();
-      if (!statusByName.has(key)) {
-        statusByName.set(key, dbModel.status ?? null);
+      if (!dbByName.has(key)) {
+        dbByName.set(key, { status: dbModel.status ?? null, attemp: dbModel.attempt ?? null });
       }
     }
-    this.logger.log('getCbModels: statusByName keys', Array.from(statusByName.keys()));
+    this.logger.log('getCbModels: dbByName keys', Array.from(dbByName.keys()));
 
     let filteredModels = data.filter(
       (model) => model.current_show === 'public' && model.gender !== 'm',
@@ -60,21 +60,25 @@ export class CBService {
 
       if (statusLower === 'null' || statusLower === 'none' || statusLower === '') {
         filteredModels = filteredModels.filter(
-          (model) => !statusByName.get(model.username.trim().toLowerCase()),
+          (model) => !dbByName.get(model.username.trim().toLowerCase())?.status,
         );
       } else {
         filteredModels = filteredModels.filter((model) =>
-          statusByName.get(model.username.trim().toLowerCase())?.toLowerCase() === statusLower,
+          dbByName.get(model.username.trim().toLowerCase())?.status?.toLowerCase() === statusLower,
         );
       }
     }
 
     this.logger.log('getCbModels: after filter', { count: filteredModels.length });
-    const mapped = filteredModels.map((model) => ({
-      name: model.username,
-      image_url: model.image_url,
-      status: statusByName.get(model.username.trim().toLowerCase()) ?? null,
-    }));
+    const mapped = filteredModels.map((model) => {
+      const dbModel = dbByName.get(model.username.trim().toLowerCase());
+      return {
+        name: model.username,
+        image_url: model.image_url,
+        status: dbModel?.status ?? null,
+        attemp: dbModel?.attemp ?? null,
+      };
+    });
     const from = (page - 1) * limit;
     this.logger.log('getCbModels: returning slice', { from, to: from + limit, total: mapped.length });
     return mapped.slice(from, from + limit);

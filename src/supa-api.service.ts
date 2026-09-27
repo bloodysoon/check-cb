@@ -4,7 +4,7 @@ export interface VideoModel {
   isOnline: boolean;
   id: number;
   status?: string;
-  attemp?: number;
+  attempt?: number;
 }
 
 
@@ -152,23 +152,23 @@ export async function incrementAttemp(name: string) {
   const supabase = createSupabaseClient();
   const { data, error } = await supabase
     .from('ChatModels')
-    .select('attemp')
+    .select('attempt')
     .eq('name', name)
     .maybeSingle();
 
-  if (error) throw new Error(`Error reading attemp: ${error.message}`);
+  if (error) throw new Error(`Error reading attempt: ${error.message}`);
   if (!data) throw new Error(`Model not found: ${name}`);
 
-  const current = (data as any).attemp ?? 0;
+  const current = (data as any).attempt ?? 0;
   const next = current + 1;
 
   const { data: updated, error: updateError } = await supabase
     .from('ChatModels')
-    .update({ attemp: next })
+    .update({ attempt: next })
     .eq('name', name)
     .select()
     .single();
 
-  if (updateError) throw new Error(`Error updating attemp: ${updateError.message}`);
+  if (updateError) throw new Error(`Error updating attempt: ${updateError.message}`);
   return updated;
 }
