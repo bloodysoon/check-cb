@@ -15,10 +15,11 @@ export class ModelController {
   async getCbModels(
     @Query('limit') limit?: string,
     @Query('page') page?: string,
+    @Query('status') status?: string,
   ): Promise<any> {
     const limitNumber = limit ? +limit || 20 : 20;
     const pageNumber = page ? +page || 1 : 1;
-    return await this.cbService.getCbModels(limitNumber, pageNumber);
+    return await this.cbService.getCbModels(limitNumber, pageNumber, status);
   }
 
   @Post('/cb')

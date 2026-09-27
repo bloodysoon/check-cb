@@ -30,10 +30,11 @@ export class CBService {
   async getCbModels(
     limit: number = 20,
     page: number = 1,
+    status: string = 'public',
   ): Promise<{ name: string; image_url: string }[]> {
     const data = await this.getCbData();
-    const publicModels = data.filter((model) => model.current_show === 'public');
-    const mapped = publicModels.map((model) => ({
+    const filteredModels = data.filter((model) => model.current_show === status);
+    const mapped = filteredModels.map((model) => ({
       name: model.username,
       image_url: model.image_url,
     }));
