@@ -30,10 +30,26 @@ export class CBService {
   async getCbModels(
     limit: number = 20,
     page: number = 1,
-    status: string = 'public',
+    status?: string,
   ): Promise<{ name: string; image_url: string }[]> {
-    const data = await this.getCbData();
-    const filteredModels = data.filter((model) => model.current_show === status);
+    const [data, dbModels] = await Promise.all([
+      this.getCbData(),
+      status ? getModels() : Promise.resolve([] as VideoModel[]),
+    ]);
+
+    let filteredModels = data.filter((model) => model.current_show === 'public');
+
+    if (status) {
+      const matchingNames = new Set(
+        dbModels
+          .filter((dbModel) => dbModel.status?.toLowerCase() === status.toLowerCase())
+          .map((dbModel) => dbModel.name.toLowerCase()),
+      );
+      filteredModels = filteredModels.filter((model) =>
+        matchingNames.has(model.username.toLowerCase()),
+      );
+    }
+
     const mapped = filteredModels.map((model) => ({
       name: model.username,
       image_url: model.image_url,
