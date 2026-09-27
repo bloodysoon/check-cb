@@ -8,6 +8,9 @@ export interface VideoModel {
 }
 
 import { createClient } from '@supabase/supabase-js';
+import * as ws from 'ws';
+
+(globalThis as any).WebSocket = ws.WebSocket;
 
 function createSupabaseClient() {
   const url = process.env.SUPABASE_URL;
@@ -52,6 +55,15 @@ export async function getModels(): Promise<VideoModel[]> {
   return allData as VideoModel[];
 }
 
+export async function updateModelStatus(name: string, status?: string | null) {
+  if (!name) throw new Error('Name is required');
+  console.log('updateModelStatus:', { name, status });
+
+  const [result] = await saveModels([{ name, status }]);
+  console.log('updateModelStatus result:', { result });
+  return result?.data || [];
+}
+
 export async function addModel(name: string, status?: string) {
   const supabase = createSupabaseClient();
   const payload: any = { name };
@@ -61,6 +73,56 @@ export async function addModel(name: string, status?: string) {
   console.log('Supabase insert result:', { data, error });
   if (error) throw new Error(`Error adding model: ${error.message}`);
   return data;
+}
+
+export async function saveModels(models: { name: string; status?: string | null }[]) {
+  const allModels = await getModels();
+  console.log('saveModels: loaded db models', { totalDbModels: allModels.length });
+
+  const supabase = createSupabaseClient();
+  const byName = new Map<string, VideoModel[]>();
+
+  for (const model of allModels) {
+    if (!model.name?.trim()) continue;
+    const key = model.name.trim().toLowerCase();
+    if (!byName.has(key)) byName.set(key, []);
+    byName.get(key)!.push(model);
+  }
+
+  const results: any[] = [];
+  for (const { name, status } of models) {
+    const trimmedName = name?.trim();
+    if (!trimmedName) {
+      console.log('saveModels: skipping empty name', { name, status });
+      continue;
+    }
+    const matching = byName.get(trimmedName.toLowerCase()) || [];
+    console.log('saveModels: processing', { name, trimmedName, status, matchingCount: matching.length });
+
+    if (matching.length > 0) {
+      const update: any = {};
+      if (status !== undefined) update.status = status;
+      console.log('saveModels: updating', { trimmedName, ids: matching.map((model) => model.id), update });
+      const { data, error } = await supabase
+        .from('ChatModels')
+        .update(update)
+        .in('id', matching.map((model) => model.id))
+        .select();
+      console.log('saveModels: update result', { trimmedName, data, error });
+      if (error) throw new Error(`Error saving ${trimmedName}: ${error.message}`);
+      results.push({ name: trimmedName, action: 'updated', data });
+    } else {
+      const payload: any = { name: trimmedName };
+      if (status !== undefined) payload.status = status;
+      console.log('saveModels: inserting', { trimmedName, payload });
+      const { data, error } = await supabase.from('ChatModels').insert(payload).select();
+      console.log('saveModels: insert result', { trimmedName, data, error });
+      if (error) throw new Error(`Error adding ${trimmedName}: ${error.message}`);
+      results.push({ name: trimmedName, action: 'inserted', data });
+    }
+  }
+
+  return results;
 }
 
 export async function updateDbOnlineStatus(

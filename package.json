@@ -27,9 +27,11 @@
     "@nestjs/platform-express": "^10.0.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.48.1",
+    "@types/ws": "8.5.13",
     "joi": "^17.13.3",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "ws": "8.18.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

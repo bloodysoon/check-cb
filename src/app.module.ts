@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { configArray, environmentSchema } from './config';
 import { CBModule } from './modules/cb/cb.module';
-import { ModelController } from './modules/models/model.controller';
+import { ApiController, ModelController } from './modules/models/model.controller';
 
 @Module({
   imports: [
@@ -13,6 +13,6 @@ import { ModelController } from './modules/models/model.controller';
       load: configArray,
     }),
   ],
-  controllers: [ModelController],
+  controllers: [ModelController, ApiController],
 })
 export class AppModule {}
